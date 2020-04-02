@@ -1,0 +1,195 @@
+---
+title: "Exercise_2"
+author: "Sankhadip"
+date: "3/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, eval=T, echo=FALSE}
+suppressMessages(library(tidyverse))
+suppressMessages(library(ggplot2))
+suppressMessages(library(GGally))
+library(lubridate)
+library(readxl)
+library(plotly)
+```
+
+Renaming Column Names for easy code handling and Cleaning Data
+
+```{r}
+e <- read_excel("~/SharedFiles/ST606/2020/data/Exercise/fit_database_anthropometric_all.xlsx")
+
+
+#Renaming Variables
+
+names(e)[names(e)=='measurement date']<- 'measurement_date'
+names(e)[names(e)=='age (years)']<- 'age_years'
+names(e)[names(e)=='age bin']<- 'age_bin'
+#names(e)[names(e)=='z-category (WHO)']<- 'z_cat_WHO'
+names(e)[length(e)]<-"z_cat_WHO"
+names(e)[9]<-"z_score_WHO"
+
+#Dealing with NAs
+ena<-na.omit(e)
+any(is.na(ena$z_cat_WHO))
+
+#Adding additional column
+ena$year <- year(ena$measurement_date)
+
+```
+
+
+```{r}
+
+#Changing Data Types
+
+ena$`height (cm)`<-as.numeric(ena$`height (cm)`)
+ena$`weight (kg)`<-as.numeric(ena$`weight (kg)`)
+ena$BMI<-as.numeric(ena$BMI)
+ena$z_score_WHO<-as.numeric(ena$z_score_WHO)
+
+```
+
+Diving data as per Year
+
+```{r}
+
+ena_2007 <- filter(ena, year(measurement_date) == 2007)
+ena_2008 <- filter(ena, year(measurement_date) == 2008)
+ena_2009 <- filter(ena, year(measurement_date) == 2009)
+ena_2010 <- filter(ena, year(measurement_date) == 2010)
+ena_2011 <- filter(ena, year(measurement_date) == 2011)
+ena_2012 <- filter(ena, year(measurement_date) == 2012)
+ena_2013 <- filter(ena, year(measurement_date) == 2013)
+ena_2014 <- filter(ena, year(measurement_date) == 2014)
+ena_2015 <- filter(ena, year(measurement_date) == 2015)
+ena_2016 <- filter(ena, year(measurement_date) == 2016)
+ena_2017 <- filter(ena, year(measurement_date) == 2017)
+ena_2018 <- filter(ena, year(measurement_date) == 2018)
+
+```
+
+Checking uniques IDs whose observation has been taken continuously from 2007 to 2018
+
+```{r}
+
+a_07_08 <- subset(ena_2007, ID %in% ena_2008$ID)
+a_07_09 <- subset(a_07_08, ID %in% ena_2009$ID)
+a_07_10 <- subset(a_07_09, ID %in% ena_2010$ID)
+a_07_11 <- subset(a_07_10, ID %in% ena_2011$ID)
+a_07_12 <- subset(a_07_11, ID %in% ena_2012$ID)
+a_07_13 <- subset(a_07_12, ID %in% ena_2013$ID)
+a_07_14 <- subset(a_07_13, ID %in% ena_2014$ID)
+a_07_15 <- subset(a_07_14, ID %in% ena_2015$ID)
+a_07_16 <- subset(a_07_15, ID %in% ena_2016$ID)
+a_07_17 <- subset(a_07_16, ID %in% ena_2017$ID)
+a_07_18 <- subset(a_07_17, ID %in% ena_2018$ID)
+
+nrow(a_07_18)
+a_unique_07<- subset(ena, ID %in% a_07_18$ID)
+
+a_check_07<-ggplot(data=a_unique_07)+
+  geom_bar(aes(x=z_cat_WHO))+facet_wrap(~year(measurement_date))
+
+ggplotly(a_check_07)
+
+a_07_18 %>% group_by(ID, year) %>% summarise(count=n()) -> dat
+a_07_18 %>% group_by(age_bin, year) %>% summarise(count=n()) -> age_check_07
+obese_check_07<-a_unique_07 %>% group_by(year, z_cat_WHO) %>% summarise(count=n())
+
+
+```
+
+Checking Uniques IDs whose observation has been taken continuously from 2008 to 2018
+
+```{r}
+
+a_08_09 <- subset(ena_2008, ID %in% ena_2009$ID)
+a_08_10 <- subset(a_08_09, ID %in% ena_2010$ID)
+a_08_11 <- subset(a_08_10, ID %in% ena_2011$ID)
+a_08_12 <- subset(a_08_11, ID %in% ena_2012$ID)
+a_08_13 <- subset(a_08_12, ID %in% ena_2013$ID)
+a_08_14 <- subset(a_08_13, ID %in% ena_2014$ID)
+a_08_15 <- subset(a_08_14, ID %in% ena_2015$ID)
+a_08_16 <- subset(a_08_15, ID %in% ena_2016$ID)
+a_08_17 <- subset(a_08_16, ID %in% ena_2017$ID)
+a_08_18 <- subset(a_08_17, ID %in% ena_2018$ID)
+
+nrow(a_08_18)
+
+a_unique_08<- subset(ena, ID %in% a_08_18$ID)
+
+a_check_08<-ggplot(data=a_unique_08)+
+  geom_bar(aes(x=z_cat_WHO))+facet_wrap(~year(measurement_date))
+
+ggplotly(a_check_08)
+
+nrow(a_unique_08)
+
+a_08_18 %>% group_by(ID, year) %>% summarise(count=n()) -> dat_08
+a_08_18 %>% group_by(age_bin, year) %>% summarise(count=n()) -> age_check_08
+obese_check_08<-a_unique_08 %>% group_by(year, z_cat_WHO) %>% summarise(count=n())
+
+```
+
+Checking Uniques IDs whose observation has been taken continuously from 2009 to 2018
+
+```{r}
+
+a_09_10 <- subset(ena_2009, ID %in% ena_2010$ID)
+a_09_11 <- subset(a_09_10, ID %in% ena_2011$ID)
+
+a_09_12 <- subset(a_09_11, ID %in% ena_2012$ID)
+a_09_13 <- subset(a_09_12, ID %in% ena_2013$ID)
+a_09_14 <- subset(a_09_13, ID %in% ena_2014$ID)
+a_09_15 <- subset(a_09_14, ID %in% ena_2015$ID)
+a_09_16 <- subset(a_09_15, ID %in% ena_2016$ID)
+a_09_17 <- subset(a_09_16, ID %in% ena_2017$ID)
+a_09_18 <- subset(a_09_17, ID %in% ena_2018$ID)
+
+nrow(a_09_18)
+
+a_unique_09<- subset(ena, ID %in% a_09_18$ID)
+
+a_check_09<-ggplot(data=a_unique_09)+
+  geom_bar(aes(x=z_cat_WHO))+facet_wrap(~year(measurement_date))
+
+ggplotly(a_check_09)
+
+nrow(a_unique_09)
+
+dat_09 <- a_09_18 %>% group_by(ID, year) %>% summarise(count=n())
+age_check_09 <- a_09_18 %>% group_by(age_bin, year) %>% summarise(count=n())
+obese_check_09<-a_unique_09 %>% group_by(z_cat_WHO,year) %>% summarise(count=n())
+obese_check_09%>% filter(z_cat_WHO=="obese")%>% arrange(desc(count))%>%head(3)
+
+
+a_unique_09 %>% group_by(year) %>% summarise(count=n())
+
+```
+
+```{r,eval=F}
+
+```
+
+
+```{r}
+
+ena %>% group_by(ID, year) %>% summarise(count=n()) -> dat
+dat %>% group_by(ID) %>% summarise(sum=sum(year)) %>% filter(sum>24000) -> temp
+dat %>% group_by(ID) %>% summarise(sum=sum(year)) %>% filter(sum>22000) -> temp_08
+
+nrow(temp)
+nrow(temp_08)
+
+a_07_18$ID[!(a_08_18$ID %in% temp_08$ID)]
+(temp_08$ID %in% a_08_18$ID)
+
+#count differnt for temp_08 and a_08_18 because some ids took obs on 2007 and not on 2008 so removed those.
+#for checking the max of age group by and give predictions
+
+```
