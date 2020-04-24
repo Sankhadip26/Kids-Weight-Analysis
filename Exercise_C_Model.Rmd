@@ -1,0 +1,184 @@
+---
+title: "Exercise_2"
+author: "Sankhadip Debnath"
+date: "3/18/2020"
+output: html_document
+---
+
+```{r, eval=T, echo=FALSE}
+suppressMessages(library(tidyverse))
+suppressMessages(library(ggplot2))
+suppressMessages(library(GGally))
+library(lubridate)
+library(readxl)
+library(plotly)
+library(leaps)
+library(dplyr)
+
+```
+
+Renaming Column Names for easy code handling and Cleaning Data
+
+```{r}
+e <- read_excel("~/SharedFiles/ST606/2020/data/Exercise/fit_database_anthropometric_all.xlsx")
+
+#Renaming Variables
+
+names(e)[names(e)=='measurement date']<- 'measurement_date'
+names(e)[names(e)=='age (years)']<- 'age_years'
+names(e)[names(e)=='age bin']<- 'age_bin'
+names(e)[length(e)]<-"z_cat_WHO"
+names(e)[9]<-"z_score_WHO"
+names(e)[6]<-"height_cm"
+names(e)[7]<-"weight_kg"
+
+#Dealing with NAs
+ena<-na.omit(e)
+any(is.na(ena$z_cat_WHO))
+
+#Adding additional column
+ena$year <- year(ena$measurement_date)
+
+#Changing Data Types
+ena$height_cm<-as.numeric(ena$height_cm)
+ena$weight_kg<-as.numeric(ena$weight_kg)
+ena$BMI<-as.numeric(ena$BMI)
+ena$z_score_WHO<-as.numeric(ena$z_score_WHO)
+
+
+
+```
+```{r}
+
+ena$observation <- 1:nrow(ena)
+x<-ena[ena$z_cat_WHO=="NA",]
+y<-x$observation
+ena<-ena[-y,]
+
+library(nnet)
+ena <- ena %>%
+  mutate(gender = as.factor(gender),
+         z_cat_WHO=as.factor(z_cat_WHO),
+         BMI = as.numeric(BMI),
+         z_score_WHO=as.numeric(z_score_WHO),
+         height_cm=as.numeric(height_cm),
+         weight_kg=as.numeric(weight_kg))
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+
+#Checking Numerical Variables for Correlation
+cor_ena<-cor(ena[c(4,6,7,8,9)])
+ggpairs(ena[c(4,6,7,8,9)])
+
+#Predictors for modelling
+ena_p<-ena[c("age_bin","gender","BMI","z_cat_WHO")]
+ena_p$z_cat_WHO <- relevel(ena_p$z_cat_WHO, ref = "normal")
+
+#Creating Training and Test dataset
+set.seed(123)
+n <- nrow(ena_p)
+trainingRows <- sample(n, 0.75*n)
+
+#Model training data
+training <- ena_p[trainingRows, ]
+
+#Test data
+test <- ena_p[-trainingRows, ]
+
+#Checking best predictors
+fwfits <- regsubsets(z_cat_WHO ~ ., data=training,really.big = T, method="forward")
+summary(fwfits)$which #Shows the order
+plot(fwfits, scale="r2", col="blue", main="Best")
+
+```
+
+```{r}
+
+#Fittling Model on Training Data
+fit_mult_full <- multinom(z_cat_WHO ~ ., data = training)
+summary(fit_mult_full)
+
+pred_train <- predict(fit_mult_full, type = "probs")
+head(pred_train)
+pred_train=as.tibble(pred_train)
+
+
+#Prediction on Training Data
+
+outcome <- function(data){
+  dummy <- apply(data,1,which.max)
+  data <- data %>% mutate(index=dummy,
+                  outcome=colnames(data)[dummy])
+  return (data)
+}
+
+pred_trainNew <- outcome(pred_train)
+glimpse(pred_trainNew)
+tab <- table(pred_trainNew$outcome,training$z_cat_WHO)
+acc <- sum(diag(tab))/sum(tab)
+acc
+
+#Prediction on test Data
+pred_test <- predict(fit_mult_full, test, type = "probs")
+head(pred_test)
+
+pred_test=as.tibble(pred_test)
+
+pred_testNew <- outcome(pred_test)
+glimpse(pred_testNew)
+tab1 <- table(pred_testNew$outcome,test$z_cat_WHO)
+acc1 <- sum(diag(tab1))/sum(tab1)
+acc1
+
+############
+
+
+```
+
+
+```{r}
+
+
+```
+
+```{r}
+
+#Prediction on Training Data
+pred_trainNew <- outcome(pred_train)
+training$outcome<-outcome(pred_train)
+
+
+glimpse(pred_trainNew)
+tab <- table(pred_trainNew$outcome,training$z_cat_WHO)
+acc <- sum(diag(tab))/sum(tab)
+acc
+
+#Prediction on test Data
+pred_test <- predict(fit_mult_full, test, type = "probs")
+head(pred_test)
+
+pred_test=as.tibble(pred_test)
+outcome <- function(data){
+  dummy <- apply(data,1,which.max)
+  data <- data %>% mutate(index=dummy,
+                  outcome=colnames(data)[dummy])
+  return (data)
+}
+pred_testNew <- outcome(pred_test)
+glimpse(pred_testNew)
+tab1 <- table(pred_testNew$outcome,test$z_cat_WHO)
+acc1 <- sum(diag(tab1))/sum(tab1)
+acc1
+
+```
+
