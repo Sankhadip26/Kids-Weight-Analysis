@@ -1,0 +1,149 @@
+---
+title: "Weight changes"
+author: "Sankhadip"
+date: "28/06/2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r,message=FALSE}
+library(tidyverse)
+library(shiny)
+load('~/x.Rdata')
+```
+
+## R Markdown
+
+```{r}
+ena_z<-ena%>%select(ID,z_cat_WHO)%>%distinct(ID,z_cat_WHO)%>%group_by(ID)%>%summarise(Count=n())%>%filter(Count!=1)
+unique_z <- subset(ena_z, ID %in% a_07_18$ID)
+
+
+ui <- fluidPage(
+    #selectInput('gender','Select the gender',choices = levels(ena$gender)),
+    selectInput('id','Select the ID',choices = c(1,2)),
+    plotOutput('graph')
+)
+
+server <- function(input, output,session) {
+  updateSelectInput(session,'id',choices = unique_z$ID)
+  
+  output$graph<-renderPlot({
+  unique_z_07<-a_unique_07 %>% filter((ID)==input$id)
+
+  ggplot(unique_z_07) +
+  geom_line(aes(x=age_years, y= z_score_WHO, color = ID)) +
+  geom_hline(yintercept=0.99999, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-2, linetype="dashed", color = "green")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -2, ymax = 0.99999, fill="green", alpha=0.15,      color = NA) + annotate(geom = "text", x=18, y=-0.5, label="Normal", color = " Black") +
+
+  geom_hline(yintercept=-2.000001, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-3, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -3, ymax = -1.99999, fill="yellow", alpha=0.3,   color = NA) + annotate(geom = "text", x=18, y=-2.5, label="Thin", color = " Black") +
+
+
+
+  geom_hline(yintercept=-3.000001, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=-Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=-3.000001, ymax=-Inf,   fill="red", alpha=0.15,     color = NA) + annotate(geom = "text", x=18, y=-3.3, label="Severely Thin", color = " Black") +
+
+  geom_hline(yintercept=1, linetype="dashed", color = "green")+
+  geom_hline(yintercept=1.99999, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 1, ymax = 1.99999, fill="yellow", alpha=0.3,     color = NA) + annotate(geom = "text", x=18, y=1.5, label="Overweight", color = " Black") +
+
+  geom_hline(yintercept=2, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=2, ymax=Inf, fill="red", alpha=0.15, color = NA) +
+  annotate(geom = "text", x=18, y=2.5, label="Obese", color = " Black") +
+
+  ggtitle("Changes in Weight and Category with Age")
+    })
+}
+
+shinyApp(ui, server)
+```
+ 
+
+```{r,eval=F}
+
+ 
+
+#Visualizing the Ids(Data is throughout 2007-2018)
+ggplot(unique_z_07) +
+  geom_line(aes(x=age_years, y= z_score_WHO, color = ID)) +
+  geom_hline(yintercept=0.99999, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-2, linetype="dashed", color = "green")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -2, ymax = 0.99999, fill="green", alpha=0.15,      color = NA) + annotate(geom = "text", x=18, y=-0.5, label="Normal", color = " Black") +
+  
+  geom_hline(yintercept=-2.000001, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-3, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -3, ymax = -1.99999, fill="yellow", alpha=0.3,   color = NA) + annotate(geom = "text", x=18, y=-2.5, label="Thin", color = " Black") +
+
+ 
+
+  geom_hline(yintercept=-3.000001, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=-Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=-3.000001, ymax=-Inf,   fill="red", alpha=0.15,     color = NA) + annotate(geom = "text", x=18, y=-3.3, label="Severely Thin", color = " Black") +
+  
+  geom_hline(yintercept=1, linetype="dashed", color = "green")+
+  geom_hline(yintercept=1.99999, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 1, ymax = 1.99999, fill="yellow", alpha=0.3,     color = NA) + annotate(geom = "text", x=18, y=1.5, label="Overweight", color = " Black") +
+  
+  geom_hline(yintercept=2, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=2, ymax=Inf, fill="red", alpha=0.15, color = NA) +
+  annotate(geom = "text", x=18, y=2.5, label="Obese", color = " Black") +
+  
+  ggtitle("Changes in Weight and Category with Age")
+
+ 
+
+#use horizontal lines to show the categories
+#(z-score< −3 - severely thin, −3 < = z-score < −2 - thin,
+#  −2<=z-score<1 - normal, 1<=z-score<2 - overweight, 2<=z-score - obese)
+#unique_z_07[1:50,]
+
+ 
+
+```
+
+ 
+
+```{r, eval=F}
+#Rest all Ids
+all_ids<-ena %>% filter(!(ID) %in% unique_z$ID)
+
+ 
+
+#Visualizing the Ids(Data is not throughout 2007-2018)
+ggplot(all_ids) +
+  geom_line(aes(x=age_years, y= z_score_WHO, color = ID)) +
+  geom_hline(yintercept=0.99999, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-2, linetype="dashed", color = "green")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -2, ymax = 0.99999, fill="green", alpha=0.15,      color = NA) + annotate(geom = "text", x=18, y=-0.5, label="Normal", color = " Black") +
+  
+  geom_hline(yintercept=-2.000001, linetype="dashed", color = "green")+
+  geom_hline(yintercept=-3, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -3, ymax = -1.99999, fill="yellow", alpha=0.3,   color = NA) + annotate(geom = "text", x=18, y=-2.5, label="Thin", color = " Black") +
+
+ 
+
+  geom_hline(yintercept=-3.000001, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=-Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=-3.000001, ymax=-Inf,   fill="red", alpha=0.15,     color = NA) + annotate(geom = "text", x=18, y=-3.3, label="Severely Thin", color = " Black") +
+  
+  geom_hline(yintercept=1, linetype="dashed", color = "green")+
+  geom_hline(yintercept=1.99999, linetype="dashed", color = "yellow")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 1, ymax = 1.99999, fill="yellow", alpha=0.3,     color = NA) + annotate(geom = "text", x=18, y=1.5, label="Overweight", color = " Black") +
+  
+  geom_hline(yintercept=2, linetype="dashed", color = "yellow")+
+  geom_hline(yintercept=Inf, linetype="dashed", color = "red")+
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin=2, ymax=Inf, fill="red", alpha=0.15, color = NA) +
+  annotate(geom = "text", x=18, y=2.5, label="Obese", color = " Black") +
+  
+  ggtitle("Changes in Weight and Category with Age")
+```
